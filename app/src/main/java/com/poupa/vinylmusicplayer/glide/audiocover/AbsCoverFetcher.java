@@ -95,6 +95,9 @@ public abstract class AbsCoverFetcher implements DataFetcher<InputStream> {
 
     @Nullable
     InputStream loadCoverFromMediaStore(@NonNull final Song song) {
+        if (song.albumName == null || song.albumName.trim().isEmpty()) {
+            return null;
+        }
         try {
             final long albumId = song.albumId;
             stream = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
