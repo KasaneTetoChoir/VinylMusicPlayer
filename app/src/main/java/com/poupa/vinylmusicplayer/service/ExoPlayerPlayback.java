@@ -240,6 +240,11 @@ public class ExoPlayerPlayback implements Playback {
         lastPositionTimeMs = SystemClock.elapsedRealtime();
         runOnPlaybackThread(() -> {
             try {
+                if (exoPlayer.getPlaybackState() == Player.STATE_ENDED) {
+                    lastPositionMs = 0;
+                    lastPositionTimeMs = SystemClock.elapsedRealtime();
+                    exoPlayer.seekTo(0);
+                }
                 exoPlayer.play();
             } catch (Exception e) {
                 Log.e(TAG, "start error", e);
