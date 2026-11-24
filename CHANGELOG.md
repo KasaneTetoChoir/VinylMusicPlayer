@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0-rev5] - 2026-11-24
+
+### Fixes & Improvements
+
+* **Audio & Playback**:
+  * Fix ExoPlayer failing to replay from the beginning when resuming from `STATE_ENDED` (e.g., after playback stops and repeat mode is switched)
+* **Tagging & ReplayGain**:
+  * Support case-insensitive MP4 `----:com.apple.iTunes:` ReplayGain tags (e.g., lowercase `replaygain_track_gain`)
+  * Harden ID3v2 `TXXX` ReplayGain parsing using `FrameBodyTXXX` with per-frame error isolation, and fix LAME header ID3v2 offset and `galb_raw` check
+* **Artwork**:
+  * Skip MediaStore `albumId` cover fallback when a song's album name is empty to prevent songs in the same folder from displaying another song's embedded artwork
+
 ## [1.11.0-rev4] - 2026-11-09
 
 ### Fixes & Improvements
