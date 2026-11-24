@@ -5,6 +5,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.jaudiotagger.tag.flac.FlacTag;
+import org.jaudiotagger.tag.id3.ID3v24Frame;
+import org.jaudiotagger.tag.id3.ID3v24Tag;
+import org.jaudiotagger.tag.id3.framebody.FrameBodyTXXX;
 import org.jaudiotagger.tag.mp4.Mp4Tag;
 import org.jaudiotagger.tag.mp4.field.Mp4TagReverseDnsField;
 import org.jaudiotagger.tag.vorbiscomment.VorbisCommentTag;
@@ -87,5 +90,43 @@ public class ReplayGainTagExtractorTest {
         assertNotNull(result);
         assertEquals(0.30f, result.get("REPLAYGAIN_TRACK_GAIN"), DELTA);
         assertEquals(1.021449f, result.get("REPLAYGAIN_TRACK_PEAK"), DELTA);
+    }
+
+    @Test
+    public void testParseMp4Tags_lowercaseITunesPrefix() throws Exception {
+        Mp4Tag tag = new Mp4Tag();
+        tag.addField(new Mp4TagReverseDnsField("----:com.apple.iTunes:replaygain_track_gain", "com.apple.iTunes", "replaygain_track_gain", "-11.69 dB"));
+        tag.addField(new Mp4TagReverseDnsField("----:com.apple.iTunes:replaygain_track_peak", "com.apple.iTunes", "replaygain_track_peak", "1.103472"));
+        tag.addField(new Mp4TagReverseDnsField("----:com.apple.iTunes:replaygain_album_gain", "com.apple.iTunes", "replaygain_album_gain", "-11.69 dB"));
+        tag.addField(new Mp4TagReverseDnsField("----:com.apple.iTunes:replaygain_album_peak", "com.apple.iTunes", "replaygain_album_peak", "1.103472"));
+
+        Map<String, Float> result = ReplayGainTagExtractor.parseMp4Tags(tag);
+        assertNotNull(result);
+        assertEquals(-11.69f, result.get("REPLAYGAIN_TRACK_GAIN"), DELTA);
+        assertEquals(1.103472f, result.get("REPLAYGAIN_TRACK_PEAK"), DELTA);
+        assertEquals(-11.69f, result.get("REPLAYGAIN_ALBUM_GAIN"), DELTA);
+        assertEquals(1.103472f, result.get("REPLAYGAIN_ALBUM_PEAK"), DELTA);
+    }
+
+    @Test
+    public void testParseId3Tags_withUnrelatedTxxxAndLowercase() throws Exception {
+        ID3v24Tag tag = new ID3v24Tag();
+
+        ID3v24Frame unrelated = new ID3v24Frame("TXXX");
+        unrelated.setBody(new FrameBodyTXXX((byte) 0, "MusicBrainz Album Id", "abc-123"));
+        tag.addField(unrelated);
+
+        ID3v24Frame trackGain = new ID3v24Frame("TXXX");
+        trackGain.setBody(new FrameBodyTXXX((byte) 0, "replaygain_track_gain", "-7.50 dB"));
+        tag.addField(trackGain);
+
+        ID3v24Frame trackPeak = new ID3v24Frame("TXXX");
+        trackPeak.setBody(new FrameBodyTXXX((byte) 0, "REPLAYGAIN_TRACK_PEAK", "0.987654"));
+        tag.addField(trackPeak);
+
+        Map<String, Float> result = ReplayGainTagExtractor.parseId3Tags(tag, new org.jaudiotagger.audio.AudioFile());
+        assertNotNull(result);
+        assertEquals(-7.50f, result.get("REPLAYGAIN_TRACK_GAIN"), DELTA);
+        assertEquals(0.987654f, result.get("REPLAYGAIN_TRACK_PEAK"), DELTA);
     }
 }
